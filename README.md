@@ -1,4 +1,4 @@
-﻿# dsh-relay
+# dsh-relay
 
 ds-harness-remote **server（中继）** 的单文件预构建版。上游 `apps/server`（v0.5.21）用 esbuild 打成一个 ESM 文件，只依赖 Node 内置模块，无需 npm install、无需 Docker。
 
@@ -17,6 +17,7 @@ ds-harness-remote **server（中继）** 的单文件预构建版。上游 `apps
 | `DSH_SERVER_HOST` | 否 | 默认 127.0.0.1（只让本机反代进来，安全） |
 | `DSH_SERVER_DATA_FILE` | 否 | 状态文件，默认 `data/store.json` |
 | `DSH_SERVER_STUN_URLS` / `DSH_SERVER_TURN_URLS` | 否 | 留空 = Relay-only（不打洞，最稳） |
+| `DSH_SERVER_SLOW_CONSUMER_FRAMES` | 否 | 慢消费者阈值（帧数，1 帧 = 1 MiB，4..256，默认 **16**）。上游硬编码 4，手机拉大历史时 2–3 秒就被判 `SLOW_CONSUMER` 踢掉；调大后容忍更慢的下行 |
 | `LOG_LEVEL` | 否 | `info` / `debug` |
 
 ## 反向代理要求
