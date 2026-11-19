@@ -1,6 +1,8 @@
 # relay-watchdog.ps1 - keep the ds-harness-remote relay alive on Windows.
-# Scheduled task: DSHRelayWatch (every 5 minutes, SYSTEM).
+# Scheduled task: DSHRelayWatch (every 2 minutes, SYSTEM).
 # Health: GET http://127.0.0.1:8080/health must return {"status":"ok"}.
+# Nothing listening on 8080 -> restart immediately.
+# Listening but unhealthy -> restart after 2 consecutive failures.
 
 $ErrorActionPreference = 'Continue'
 $root  = 'C:\DSHRelay'
@@ -56,10 +58,12 @@ if (Test-Health) {
 
 $fails++
 Set-Fails $fails
-Log "health FAILED (consecutive=$fails)"
-if ($fails -lt 2) { exit 1 }
+$listening = @(Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue).Count -gt 0
+Log "health FAILED (consecutive=$fails, listening=$listening)"
+# Nothing listening = process is gone: restart immediately.
+# Still listening = hung/or warming up: require two consecutive failures.
+if ($fails -lt 2 -and $listening) { exit 1 }
 
-# Two consecutive failures: restart the relay.
 Log "restarting relay"
 Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -like '*relay-server.mjs*' } | ForEach-Object {
     Log ("killing stale node pid=" + $_.ProcessId)
